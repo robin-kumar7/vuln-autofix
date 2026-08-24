@@ -1,0 +1,2131 @@
+# Central vulnerability remediation configuration for all Infoblox Go services
+# This file defines service-specific build flags, Docker configuration, and risk scoring parameters.
+#
+# Each service section must include all required fields or inherit from defaults.
+# Reference: https://github.com/Infoblox-CTO/ddi.ai.agents
+#
+# Required fields per service:
+#   - image_name: Docker image name for scanning
+#   - dockerfile_path: Relative path to Dockerfile
+#   - server_build_path: Relative path to main package (e.g., ./cmd/server)
+#   - base_image: Base image digest or tag
+#   - mode: Risk scoring mode (heuristic)
+#
+# Optional fields (if omitted, script defaults apply where defined):
+#   - build_tags, build_ldflags, docker_build_extra_args
+#   - go_private: Private module import path patterns
+#   - risk_threshold_auto, risk_threshold_review, min_confidence, etc.
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GLOBAL SETTINGS (applies to all services)
+# ═══════════════════════════════════════════════════════════════════════════════
+global:
+  wiz_cli_version: "latest"
+  harbor_registry: "harbor.services.sdp.infoblox.com"
+  artifact_retention_days: 30
+
+services:
+  ddi-dispatcher:
+    team: uddi
+    image_name: ddi-dispatcher
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-bff-service:
+    team: uddi
+    image_name: ddi-bff-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg BFF_SWAGGER_PATH=api/swagger-spec/v1 --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-dhcp-leases:
+    team: uddi
+    image_name: ddi-dhcp-leases
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-internal-range-controller:
+    team: uddi
+    image_name: ddi-internal-range-controller
+    vendor_for_docker: true
+    dockerfile_path: Dockerfile
+    server_build_path: .
+    build_tags: ""
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-ipam-federation:
+    team: uddi
+    image_name: ddi-ipam-federation
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-ipam-ipamsvc:
+    team: uddi
+    image_name: ddi-ipam-ipamsvc
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan --build-arg KEA_IMAGE_v4_3=harbor.services.sdp.infoblox.com/infobloxcto/ddi.vendor.kea:ci-2024-04-22T21-57Z-347-8c6a5e6b-feature-cve-2023-44487 --build-arg KEA_PATH_v4_3=/home/keadist/v4.3 --build-arg KEA_IMAGE_v4_4=harbor.services.sdp.infoblox.com/infobloxcto/ddi.vendor.kea:ci-2025-04-14T20-14Z-399-7d7b8726-master --build-arg KEA_PATH_v4_4=/home/keadist/v4.4 --build-arg KEA_IMAGE_v4_5=harbor.services.sdp.infoblox.com/infobloxcto/ddi.vendor.kea:ci-2026-01-14T23-29Z-448-e75f563f-develop --build-arg KEA_PATH_v4_5=/home/keadist/v4.5"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-keys:
+    team: uddi
+    image_name: ddi-keys
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-msadconnect-proxy:
+    team: uddi
+    image_name: ddi-msadconnect-proxy
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-oph-source:
+    team: uddi
+    image_name: ddi-oph-source
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  asset-perspective-service:
+    team: platform
+    image_name: asset-perspective-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  athena-identity-service:
+    team: platform
+    image_name: athena-identity-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/identity
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  sfdc-events:
+    team: platform
+    image_name: sfdc-events
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/manager
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-actionable-redirect:
+    team: platform
+    image_name: atlas-actionable-redirect
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-api-metadata:
+    team: platform
+    image_name: atlas-api-metadata
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-bulk:
+    team: platform
+    image_name: atlas-bulk
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-crd-sidecar:
+    team: platform
+    image_name: atlas-crd-sidecar
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-customer-logs:
+    team: platform
+    image_name: atlas-customer-logs
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-customer-metrics:
+    team: platform
+    image_name: atlas-customer-metrics
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-customer-metrics-ingest:
+    team: platform
+    image_name: atlas-customer-metrics-ingest
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-data-deletion:
+    team: platform
+    image_name: atlas-data-deletion
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-eventing-cr-controller:
+    team: platform
+    image_name: atlas-eventing-cr-controller
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-feature-flag:
+    team: platform
+    image_name: atlas-feature-flag
+    vendor_for_docker: true
+    dockerfile_path: build/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-fingerprint-service:
+    team: platform
+    image_name: atlas-fingerprint-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-jobs:
+    team: platform
+    image_name: atlas-jobs
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/tasks
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-kafka-connect-operator:
+    team: platform
+    image_name: atlas-kafka-connect-operator
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-kibana-operator:
+    team: platform
+    image_name: atlas-kibana-operator
+    dockerfile_path: build/Dockerfile
+    server_build_path: ./cmd/manager
+    build_tags: ""
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "alpine:latest"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-log-indexer:
+    team: platform
+    image_name: atlas-log-indexer
+    dockerfile_path: docker/Dockerfile
+    server_build_path: .
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-log-ingester:
+    team: platform
+    image_name: atlas-log-ingester
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-maintenance-service:
+    team: platform
+    image_name: atlas-maintenance-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-metrics-registry:
+    team: platform
+    image_name: atlas-metrics-registry
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-notifications-alert-adapter:
+    team: platform
+    image_name: atlas-notifications-alert-adapter
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-notifications-config:
+    team: platform
+    image_name: atlas-notifications-config
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-notifications-dispatcher:
+    team: platform
+    image_name: atlas-notifications-dispatcher
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd
+    build_tags: ""
+    build_ldflags: "-s -w -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-notifications-events-processor:
+    team: platform
+    image_name: atlas-notifications-events-processor
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-notifications-mailbox:
+    team: platform
+    image_name: atlas-notifications-mailbox
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-notifications-postoffice:
+    team: platform
+    image_name: atlas-notifications-postoffice
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-notifications-sender:
+    team: platform
+    image_name: atlas-notifications-sender
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-notifications-thresholding:
+    team: platform
+    image_name: atlas-notifications-thresholding
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-policy-api:
+    team: platform
+    image_name: atlas-policy-api
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-pubsub-dapr-adapter:
+    team: platform
+    image_name: atlas-pubsub-dapr-adapter
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-realm-client:
+    team: platform
+    image_name: atlas-realm-client
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-realm-manager:
+    team: platform
+    image_name: atlas-realm-manager
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "alpine:latest"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-realm-resolver:
+    team: platform
+    image_name: atlas-realm-resolver
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-recyclebin:
+    team: platform
+    image_name: atlas-recyclebin
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-search-api:
+    team: platform
+    image_name: atlas-search-api
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-search-indexer:
+    team: platform
+    image_name: atlas-search-indexer
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "alpine:latest"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-search-mapping:
+    team: platform
+    image_name: atlas-search-mapping
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-security-logs:
+    team: platform
+    image_name: atlas-security-logs
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-tagging:
+    team: platform
+    image_name: atlas-tagging
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-tagging-aggregateapi:
+    team: platform
+    image_name: atlas-tagging-aggregateapi
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-type-metadata-reflector:
+    team: platform
+    image_name: atlas-type-metadata-reflector
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "alpine:latest"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-user-metadata:
+    team: platform
+    image_name: atlas-user-metadata
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  axur-integrator:
+    team: platform
+    image_name: axur-integrator
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/integrator
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  axur-integrator-mock:
+    team: platform
+    image_name: axur-mock
+    dockerfile_path: docker/Dockerfile.axur-mock
+    server_build_path: ./cmd/axur-mock
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  axur-integrator-sync-cron:
+    team: platform
+    image_name: axur-sync-cron
+    dockerfile_path: docker/Dockerfile.axur-sync-cron
+    server_build_path: ./cmd/axur-sync
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  axur-integrator-test-probe:
+    team: platform
+    image_name: axur-test-probe
+    dockerfile_path: docker/Dockerfile.test-probe
+    server_build_path: ./cmd/test-probe
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "alpine:3.21.3"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  b1wapi-service:
+    team: uddi
+    image_name: b1wapi-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: ""
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  dapr-x:
+    team: platform
+    image_name: dapr-x-controller
+    dockerfile_path: build/Dockerfile
+    server_build_path: ./cmd/dapr-x-controller
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  dashboard-api:
+    team: platform
+    image_name: dashboard-api
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  feature-lab:
+    team: platform
+    image_name: feature-lab
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "cgr.dev/chainguard/wolfi-base:latest"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  feature-lab-labs-controller:
+    team: platform
+    image_name: feature-lab-labs-controller
+    dockerfile_path: labs-controller/Dockerfile
+    server_build_path: ./labs-controller/cmd
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  key-store-service:
+    team: platform
+    image_name: key-store-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  msp-tenancy:
+    team: platform
+    image_name: msp-tenancy
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ngp-app-audit-logging:
+    team: platform
+    image_name: ngp-app-audit-logging
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  scim:
+    team: platform
+    image_name: scim
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  sso-admin:
+    team: platform
+    image_name: sso-admin
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  sso-identity-service:
+    team: platform
+    image_name: sso-identity-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-cloud-http-proxy:
+    team: uddi
+    image_name: ddi-cloud-http.proxy
+    vendor_for_docker: true
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-dns-dtc:
+    team: uddi
+    image_name: ddi-dns-dtc
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-health:
+    team: uddi
+    image_name: ddi-health
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-dns-last-queried-updater:
+    team: uddi
+    image_name: ddi-dns-last-queried-updater
+    vendor_for_docker: true
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg DISTROLESS_BASE_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c --platform linux/amd64"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-cloud-dns-forwarder:
+    team: uddi
+    image_name: ddi-cloud-dns-forwarder
+    vendor_for_docker: true
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg DISTROLESS_BASE_IMAGE=gcr.io/distroless/static-debian12:nonroot-86b3d6d4526e933189c7eb089cc3f575e69c3119 --platform linux/amd64"
+    base_image: "gcr.io/distroless/static-debian12:nonroot-86b3d6d4526e933189c7eb089cc3f575e69c3119"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-cloud-write-proxy:
+    team: uddi
+    image_name: ddi-cloud-write-proxy
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg DISTROLESS_BASE_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  helper-service:
+    team: uddi
+    image_name: helper-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  nios-fe-controller:
+    team: uddi
+    image_name: nios-fe-controller
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-dns-vayu:
+    team: uddi
+    image_name: ddi-dns-vayu
+    vendor_for_docker: true
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg DISTROLESS_BASE_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c --platform linux/amd64"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-dns-insights-controller:
+    team: uddi
+    image_name: ddi-dns-insights-controller
+    vendor_for_docker: true
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg GO_IMAGE=golang:1.25.9-alpine --build-arg DISTROLESS_BASE_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c --platform linux/amd64"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-dns-chronos:
+    team: uddi
+    image_name: ddi-dns-chronos
+    dockerfile_path: Dockerfile
+    server_build_path: ./
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg DISTROLESS_BASE_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c --platform linux/amd64"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-msad-collector:
+    team: uddi
+    image_name: ddi-msad-collector
+    vendor_for_docker: true
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg DISTROLESS_BASE_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c --platform linux/amd64"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-msad-registry:
+    team: uddi
+    image_name: ddi-msad-registry
+    vendor_for_docker: true
+    dockerfile_path: Dockerfile
+    server_build_path: .
+    build_tags: "release"
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg DISTROLESS_BASE_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c --platform linux/amd64"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  query-builder-service:
+    team: assets
+    image_name: query-builder-service
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: ""
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-dns-data:
+    team: uddi
+    image_name: ddi-dns-data
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  # ── athena-monitoring (multi-module monorepo) ──────────────────────────────
+  # Each module is its own Go module in a subdirectory with a committed vendor/.
+  # The caller sets working_directory to the module dir; docker_build_context is
+  # ".." because these Dockerfiles COPY repo-root/sibling paths.
+  athena-csp-session-verify-canary:
+    team: platform
+    image_name: csp-session-verify-canary
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    docker_build_context: ".."
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  athena-csp-ui-flow-canary:
+    team: platform
+    image_name: csp-ui-flow-canary
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    docker_build_context: ".."
+    base_image: "gcr.io/distroless/nodejs26-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  athena-hostapp-onprem-canary:
+    team: platform
+    image_name: hostapp-onprem-canary
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    docker_build_context: ".."
+    base_image: "gcr.io/distroless/static-debian12:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-onprem-rpc-server:
+    team: uddi
+    image_name: atlas-onprem-rpc-server
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-w -s -extldflags \"-static\""
+    docker_build_extra_args: "--build-arg BUILDER_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/golang:1.26.2-alpine3.23 --build-arg DISTROLESS_BASE_IMAGE=harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c --platform linux/amd64"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-core-configcache:
+    team: uddi
+    image_name: ddi-core-configcache
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  scheduled-reports-v2:
+    team: platform
+    image_name: scheduled-reports-v2
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian12:debug-nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  scheduled-reports-v2-worker:
+    team: platform
+    image_name: scheduled-reports-v2-worker
+    dockerfile_path: docker/Dockerfile.workspacereport-worker
+    server_build_path: ./cmd/workspacereport-worker
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/cc-debian12:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  scheduled-reports-v2-summaryreports-worker:
+    team: platform
+    image_name: scheduled-reports-v2-summaryreports-worker
+    dockerfile_path: docker/Dockerfile.summaryreports-worker
+    server_build_path: ./cmd/summaryreport-worker
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/cc-debian12:nonroot"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  scheduled-reports-v2-sync:
+    team: platform
+    image_name: scheduled-reports-v2-sync
+    dockerfile_path: docker/Dockerfile.sync
+    server_build_path: ./cmd/sync
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "alpine:3.18.2"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  news-service:
+    team: platform
+    image_name: news-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-dns-config:
+    team: uddi
+    image_name: ddi-dns-config
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--platform linux/amd64 --build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan --build-arg BIND_IMAGE_v3_6=harbor.services.sdp.infoblox.com/infobloxcto/ddi.vendor.bind:ci-2024-07-16T00-39Z-514-d6c29235-feature-cve-2023-44487 --build-arg BIND_IMAGE_v3_8=harbor.services.sdp.infoblox.com/infobloxcto/ddi.vendor.bind:ci-2025-07-03T01-31Z-563-f9f31055-develop"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  athena-dashboard:
+    team: platform
+    image_name: athena-dashboard
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  athena-license-service:
+    team: platform
+    image_name: athena-license-service
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s -w"
+    # Dockerfile is parameterized: SERVER_BINARY points at the scanner-produced
+    # binary (bin/server); SWAGGER_PATH points at pkg/pb (Dockerfile flattens
+    # the nested *.swagger.json files); MIGRATION_PATH is the db/ dir at repo
+    # root. The Makefile flow keeps the Dockerfile defaults.
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=pkg/pb --build-arg MIGRATION_PATH=db"
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  atlas-cortex:
+    team: platform
+    image_name: atlas-cortex
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./promrule-controller
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "gcr.io/distroless/static-debian13:nonroot-amd64"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  asset-insight-engine:
+    team: assets
+    image_name: asset-insight-engine
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd
+    build_tags: "release"
+    docker_build_extra_args: "--build-arg DISTROLESS_BASE_IMAGE=gcr.io/distroless/static-debian12@sha256:cd64bec9cec257044ce3a8dd3620cf83b387920100332f2b041f19c4d2febf93"
+    base_image: "gcr.io/distroless/static-debian12@sha256:cd64bec9cec257044ce3a8dd3620cf83b387920100332f2b041f19c4d2febf93"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  cdc-grpc-in:
+    team: data-cdc
+    image_name: cdc-grpc-in
+    dockerfile_path: docker/Dockerfile.cloud
+    server_build_path: ./cmd/cloud
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  cdc-grpc-out:
+    team: data-cdc
+    image_name: cdc-grpc-out
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd
+    build_tags: ""
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "alpine:latest"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  cdc-api:
+    team: data-cdc
+    image_name: cdc-api
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s"
+    docker_build_extra_args: ""
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  cdc-flow-api-service:
+    team: data-cdc
+    image_name: cdc-flow-api-service
+    dockerfile_path: Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: "-s"
+    docker_build_extra_args: ""
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  cdc-syslog-out:
+    team: data-cdc
+    image_name: cdc-syslog-out
+    dockerfile_path: docker/Dockerfile.cloud
+    server_build_path: ./cmd/cloud
+    build_tags: ""
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  marketplace-controller:
+    team: data-cdc
+    image_name: marketplace-controller
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: ""
+    build_ldflags: ""
+    docker_build_extra_args: "--build-arg VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  soar-light:
+    team: data-cdc
+    image_name: soar-light
+    dockerfile_path: docker/Dockerfile.cloud
+    server_build_path: ./cmd/cloud
+    build_tags: ""
+    build_ldflags: ""
+    docker_build_extra_args: ""
+    base_image: "python:3.13-alpine3.21"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+
+  ddi-configgen-versionmgr:
+    team: uddi
+    image_name: ddi-configgen-versionmgr
+    dockerfile_path: docker/Dockerfile
+    server_build_path: ./cmd/server
+    build_tags: "release"
+    build_ldflags: "-s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    docker_build_extra_args: "--build-arg SERVER_BINARY=bin/server --build-arg SWAGGER_PATH=api/swagger-spec --build-arg MIGRATION_PATH=db/migrations --build-arg DDI_BUILD_VERSION=scan"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12@sha256:29eeffc1d3dd1f20680c09211e8d12c757b2bf53c836b4b4b8694952acf6dace"
+    go_private: "github.com/Infoblox-CTO/*"
+    # Risk scoring (conservative: auto-apply high-confidence patches only)
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25

@@ -1,0 +1,318 @@
+# vuln-autofix — scan a service image for vulnerabilities, apply the safe
+# dependency bumps, and hand the rest back for review.
+#
+# This is a COMPOSITE ACTION on purpose. The predecessor was a reusable
+# workflow that sparse-cloned its own scripts from another repo at a second,
+# independently-specified ref (`fixer_ref`), so `uses: …@v1.0.0` pinned the
+# workflow while `fixer_ref: master` floated the scripts — two knobs that had
+# to be kept in sync, and whose documented defaults disagreed (`@main` vs
+# `master`). A composite action's own files are checked out with it, so
+# `uses: Infoblox-CTO/vuln-autofix@v1` pins the workflow logic AND the scripts
+# at one ref. There is nothing to clone at run time.
+#
+# The caller is expected to have already checked out the repo to remediate
+# (see .github/workflows/vuln-autofix-reusable.yml for the wrapper that does
+# this plus `secrets: inherit`).
+name: vuln-autofix
+description: Scan for vulnerable Go modules, auto-apply safe bumps, open a PR for the result.
+
+inputs:
+  service_name:
+    description: Service key to look up in config. Defaults to the caller repo name.
+    required: false
+    default: ""
+  target_branch:
+    description: Base branch being remediated; also the PR base.
+    required: false
+    default: main
+  working_directory:
+    description: Module subdirectory to operate in (multi-module monorepos).
+    required: false
+    default: "."
+  artifact_retention_days:
+    required: false
+    default: "7"
+  pr_branch:
+    description: Branch for the auto-fix PR. Must be unique per matrix leg.
+    required: false
+    default: auto-fix-vulns-daily
+  pr_commit_message:
+    required: false
+    default: "fix: automated vulnerability remediation"
+  pr_title:
+    required: false
+    default: "fix: automated vulnerability remediation"
+
+  # ── Config source ────────────────────────────────────────────────────────
+  # Service config is served by analytics-api so it can be edited in the UI
+  # without a PR. Leave config_api_url empty to use the snapshot bundled in
+  # this action (config/services-config.yaml) instead — that is also the
+  # automatic fallback when the API is unreachable.
+  config_api_url:
+    description: Base URL of analytics-api, e.g. https://analytics.example.com/api
+    required: false
+    default: ""
+  config_api_token:
+    description: Shared secret for the config + callback endpoints (X-Scanner-Secret).
+    required: false
+    default: ""
+  report_results:
+    description: POST declined findings back so they appear in the CVE Fix UI.
+    required: false
+    default: "true"
+
+  # ── Credentials (composite actions cannot read `secrets`, so they arrive
+  #    as inputs; the reusable-workflow wrapper forwards them) ─────────────
+  github_token:
+    description: Token used for the PR and for `gh` calls.
+    required: true
+  gitpat:
+    description: PAT with read access to private Go modules. Falls back to github_token.
+    required: false
+    default: ""
+  wiz_client_id:
+    required: false
+    default: ""
+  wiz_client_secret:
+    required: false
+    default: ""
+  harbor_username:
+    required: false
+    default: ""
+  harbor_password:
+    required: false
+    default: ""
+
+outputs:
+  changed:
+    description: "true when go.mod/go.sum/vendor were modified."
+    value: ${{ steps.diff.outputs.changed }}
+  build_status:
+    description: passed | failed | skipped
+    value: ${{ steps.scan.outputs.build_status }}
+  pr_url:
+    description: URL of the PR, when one was created.
+    value: ${{ steps.pr.outputs.pull-request-url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve service name
+      id: svc
+      shell: bash
+      run: |
+        SERVICE_NAME="${{ inputs.service_name }}"
+        if [[ -z "$SERVICE_NAME" ]]; then
+          SERVICE_NAME="${{ github.event.repository.name }}"
+        fi
+        echo "name=$SERVICE_NAME" >> "$GITHUB_OUTPUT"
+        echo "Service: $SERVICE_NAME"
+
+    - name: Install yq
+      shell: bash
+      run: |
+        # Pinned, unlike the predecessor's `/latest/download` — a yq release
+        # that changes eval semantics must not silently break every service.
+        YQ_VERSION=v4.44.3
+        sudo wget -qO /usr/local/bin/yq \
+          "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+        sudo chmod +x /usr/local/bin/yq
+        yq --version
+
+    - name: Resolve service config
+      id: config
+      shell: bash
+      env:
+        CONFIG_API_URL: ${{ inputs.config_api_url }}
+        CONFIG_API_TOKEN: ${{ inputs.config_api_token }}
+      run: |
+        bash "${{ github.action_path }}/scripts/fetch-config.sh" \
+          --service "${{ steps.svc.outputs.name }}" \
+          --fallback "${{ github.action_path }}/config/services-config.yaml" \
+          --out /tmp/vuln-autofix-config.yaml
+
+    - name: Configure git auth for private modules
+      shell: bash
+      run: |
+        TOKEN="${{ inputs.gitpat }}"
+        [[ -z "$TOKEN" ]] && TOKEN="${{ inputs.github_token }}"
+        if [[ -n "$TOKEN" ]]; then
+          # url.insteadOf so the Go toolchain's own git children authenticate
+          # too — `go mod download` spawns git and inherits none of our flags.
+          git config --global url."https://${TOKEN}@github.com/".insteadOf "https://github.com/"
+        else
+          echo "::warning::No token for private modules; private imports will fail to resolve"
+        fi
+
+    - name: Export Go module env
+      shell: bash
+      run: |
+        # go_private comes from the config we already fetched — the
+        # predecessor re-read it with its own yq call, duplicating
+        # scan-and-fix.sh's load_configuration.
+        GO_PRIVATE='${{ steps.config.outputs.go_private }}'
+        if [[ -n "$GO_PRIVATE" && "$GO_PRIVATE" != "null" ]]; then
+          echo "GOPRIVATE=$GO_PRIVATE" >> "$GITHUB_ENV"
+          echo "GONOSUMDB=$GO_PRIVATE" >> "$GITHUB_ENV"
+        fi
+        echo "GOPROXY=https://proxy.golang.org,direct" >> "$GITHUB_ENV"
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: ${{ inputs.working_directory }}/go.mod
+        cache: true
+        cache-dependency-path: ${{ inputs.working_directory }}/go.sum
+
+    - name: Scan and apply fixes
+      id: scan
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      env:
+        WIZ_CLIENT_ID: ${{ inputs.wiz_client_id }}
+        WIZ_CLIENT_SECRET: ${{ inputs.wiz_client_secret }}
+        HARBOR_SERVICES_PROD_USERNAME: ${{ inputs.harbor_username }}
+        HARBOR_SERVICES_PROD_PASSWORD: ${{ inputs.harbor_password }}
+        GITPAT: ${{ inputs.gitpat }}
+      run: |
+        bash "${{ github.action_path }}/scripts/scan-and-fix.sh" \
+          --service "${{ steps.svc.outputs.name }}" \
+          --config /tmp/vuln-autofix-config.yaml \
+          --repo-root "$PWD"
+        # Surface the build verdict so the caller can gate on it.
+        STATUS=skipped
+        [[ -f build-validation-status.txt ]] && STATUS=$(cat build-validation-status.txt)
+        echo "build_status=$STATUS" >> "$GITHUB_OUTPUT"
+
+    - name: Detect dependency changes
+      id: diff
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        if git diff --quiet -- go.mod go.sum vendor; then
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Summarise when nothing was applied
+      if: steps.diff.outputs.changed == 'false'
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        MSG="No vulnerabilities found, or none with a safe automatic update."
+        if [[ -s parsed-vulns.txt ]]; then
+          MSG="Vulnerabilities were detected, but none qualified for an automatic update."
+        fi
+        {
+          echo "## vuln-autofix"
+          echo ""
+          echo "$MSG"
+          echo ""
+          echo "No changes to go.mod/go.sum/vendor."
+          if [[ -s review-queue.md ]]; then echo ""; cat review-queue.md; fi
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        # Service name in the artifact name so parallel matrix legs in a
+        # multi-module repo don't collide within one run.
+        name: vuln-autofix-${{ steps.svc.outputs.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: |
+          ${{ inputs.working_directory }}/wiz-scan-results.json
+          ${{ inputs.working_directory }}/wiz-scan-raw.txt
+          ${{ inputs.working_directory }}/grype-scan-output.json
+          ${{ inputs.working_directory }}/parsed-vulns.txt
+          ${{ inputs.working_directory }}/version-recommendations.jsonl
+          ${{ inputs.working_directory }}/risk-decisions.jsonl
+          ${{ inputs.working_directory }}/allowlist.txt
+          ${{ inputs.working_directory }}/cve-map.txt
+          ${{ inputs.working_directory }}/cve-version-map.txt
+          ${{ inputs.working_directory }}/vuln-fix-summary.md
+          ${{ inputs.working_directory }}/review-queue.md
+        if-no-files-found: ignore
+        retention-days: ${{ inputs.artifact_retention_days }}
+
+    - name: Reset stale auto-fix branch
+      if: steps.diff.outputs.changed == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        # If the previous PR was merged or closed, the branch is stale: delete
+        # it so create-pull-request opens a fresh one instead of stacking onto
+        # commits that are already upstream.
+        OPEN=$(gh pr list --repo "${{ github.repository }}" \
+                 --head "${{ inputs.pr_branch }}" --state open --json number --jq 'length')
+        if [[ "$OPEN" == "0" ]]; then
+          git push origin --delete "${{ inputs.pr_branch }}" 2>/dev/null || true
+        fi
+
+    - name: Build PR body
+      if: steps.diff.outputs.changed == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        case "${{ steps.scan.outputs.build_status }}" in
+          passed)  BADGE="✅ Build passed" ;;
+          failed)  BADGE="❌ Build failed — review before merging" ;;
+          *)       BADGE="Build validation skipped" ;;
+        esac
+        case "${{ github.event_name }}" in
+          schedule)          SRC=scheduled ;;
+          workflow_dispatch) SRC=manual ;;
+          *)                 SRC="${{ github.event_name }}" ;;
+        esac
+        {
+          echo "## Automated vulnerability fix"
+          echo ""
+          echo "Generated by the ${SRC} vuln-autofix run for \`${{ steps.svc.outputs.name }}\`."
+          echo ""
+          echo "### Build status"
+          echo "$BADGE"
+          echo ""
+          if [[ -f vuln-fix-summary.md ]]; then cat vuln-fix-summary.md; else echo "No summary produced."; fi
+          if [[ -s review-queue.md ]]; then echo ""; cat review-queue.md; fi
+        } > pr-body.md
+
+    - name: Create pull request
+      id: pr
+      if: success() && steps.diff.outputs.changed == 'true'
+      uses: peter-evans/create-pull-request@v7
+      with:
+        token: ${{ inputs.github_token }}
+        commit-message: ${{ inputs.pr_commit_message }}
+        title: ${{ inputs.pr_title }}
+        body-path: ${{ inputs.working_directory }}/pr-body.md
+        branch: ${{ inputs.pr_branch }}
+        base: ${{ inputs.target_branch }}
+        delete-branch: false
+        labels: ${{ steps.config.outputs.pr_labels }}
+        # Only dependency artefacts — never let a scan artefact or a stray
+        # build output into the PR.
+        add-paths: |
+          ${{ inputs.working_directory }}/go.mod
+          ${{ inputs.working_directory }}/go.sum
+          ${{ inputs.working_directory }}/vendor
+
+    - name: Report findings to CVE Fix
+      # always() so a failed build still reports what was declined — that is
+      # exactly the case a human needs to see.
+      if: always() && inputs.report_results == 'true' && inputs.config_api_url != ''
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      env:
+        CONFIG_API_URL: ${{ inputs.config_api_url }}
+        CONFIG_API_TOKEN: ${{ inputs.config_api_token }}
+      run: |
+        bash "${{ github.action_path }}/scripts/report-run.sh" \
+          --service "${{ steps.svc.outputs.name }}" \
+          --repo "${{ github.repository }}" \
+          --ref "${{ inputs.target_branch }}" \
+          --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          --pr-url "${{ steps.pr.outputs.pull-request-url }}" \
+          --build-status "${{ steps.scan.outputs.build_status }}" \
+          --decisions risk-decisions.jsonl

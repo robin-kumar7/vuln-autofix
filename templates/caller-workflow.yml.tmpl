@@ -1,0 +1,74 @@
+# Template rendered by the CVE Fix registration wizard.
+#
+# Placeholders (Go text/template) are substituted server-side:
+#   {{.ServiceName}}  {{.TargetBranch}}  {{.Cron}}  {{.PinnedRef}}
+#   {{.WorkingDirectory}}  {{.ConfigAPIURL}}
+#
+# {{.Cron}} is GENERATED from the schedule the user picked in the wizard
+# (cve_scan_schedules' kind/at_minute/weekday model). It is never parsed back
+# out of this file — that model deliberately has no cron parser, so the
+# database stays the single source of truth for cadence.
+name: Vulnerability Scan and Auto-Fix
+
+on:
+  schedule:
+    - cron: "{{.Cron}}"
+  workflow_dispatch: {}
+
+concurrency:
+  group: vuln-autofix-${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  vuln-autofix:
+    # One ref pins both the workflow and the fixer scripts. The predecessor
+    # needed a second `fixer_ref` input for the scripts, which could drift
+    # from this ref; the scripts now ship inside the action.
+    uses: Infoblox-CTO/vuln-autofix/.github/workflows/vuln-autofix-reusable.yml@{{.PinnedRef}}
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    with:
+      service_name: {{.ServiceName}}
+      target_branch: ${{ vars.TARGET_BRANCH || '{{.TargetBranch}}' }}
+{{- if .WorkingDirectory }}
+      working_directory: {{.WorkingDirectory}}
+{{- end }}
+      # Service config (build paths, base image, policy) is served by the
+      # platform so it can be changed in the UI without touching this repo.
+      # Clear this to fall back to the snapshot bundled in the action.
+      config_api_url: {{.ConfigAPIURL}}
+      pr_branch: auto-fix-vulns-daily
+    secrets: inherit
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MULTI-MODULE MONOREPO
+# ─────────────────────────────────────────────────────────────────────────────
+# If each service in this repo is its own Go module (own go.mod/vendor/
+# Dockerfile), use a matrix with one leg per module. Each leg needs its own
+# pr_branch or the legs will fight over one branch, and its own registration
+# in the UI with paths relative to the module directory.
+#
+# jobs:
+#   vuln-autofix:
+#     strategy:
+#       fail-fast: false          # one module failing must not cancel the rest
+#       matrix:
+#         include:
+#           - service: my-service-a
+#             dir: service-a
+#           - service: my-service-b
+#             dir: service-b
+#     uses: Infoblox-CTO/vuln-autofix/.github/workflows/vuln-autofix-reusable.yml@{{.PinnedRef}}
+#     permissions:
+#       contents: write
+#       pull-requests: write
+#       actions: read
+#     with:
+#       service_name: ${{ matrix.service }}
+#       working_directory: ${{ matrix.dir }}
+#       target_branch: ${{ vars.TARGET_BRANCH || '{{.TargetBranch}}' }}
+#       config_api_url: {{.ConfigAPIURL}}
+#       pr_branch: auto-fix-vulns-daily-${{ matrix.service }}
+#     secrets: inherit

@@ -1,0 +1,15 @@
+.DS_Store
+# Scan outputs, when running locally against a repo
+*.jsonl
+!config/*.jsonl
+parsed-vulns.txt
+allowlist.txt
+cve-map.txt
+cve-version-map.txt
+wiz-scan-*.json
+wiz-scan-raw.txt
+grype-scan-output.json
+vuln-fix-summary.md
+review-queue.md
+build-validation-status.txt
+pr-body.md

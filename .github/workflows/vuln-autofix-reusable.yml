@@ -1,0 +1,94 @@
+# Thin wrapper over action.yml.
+#
+# The composite action is the real implementation. This exists because a
+# reusable workflow can accept `secrets: inherit`, which means a caller repo
+# does not have to enumerate six secrets in its own workflow — it inherits the
+# org's and this wrapper forwards them as action inputs (composite actions
+# cannot read `secrets` themselves).
+#
+# Callers reference ONE ref, and it pins the workflow and the scripts together:
+#   uses: Infoblox-CTO/vuln-autofix/.github/workflows/vuln-autofix-reusable.yml@v1
+name: vuln-autofix (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: Service key in config. Defaults to the caller repo name.
+        required: false
+        type: string
+        default: ""
+      target_branch:
+        description: Branch to remediate; also the PR base.
+        required: false
+        type: string
+        default: main
+      working_directory:
+        description: Module subdirectory (multi-module monorepos).
+        required: false
+        type: string
+        default: "."
+      artifact_retention_days:
+        required: false
+        type: string
+        default: "7"
+      pr_branch:
+        description: Must be unique per matrix leg.
+        required: false
+        type: string
+        default: auto-fix-vulns-daily
+      pr_commit_message:
+        required: false
+        type: string
+        default: "fix: automated vulnerability remediation"
+      pr_title:
+        required: false
+        type: string
+        default: "fix: automated vulnerability remediation"
+      config_api_url:
+        description: analytics-api base URL. Empty = use the bundled config snapshot.
+        required: false
+        type: string
+        default: ""
+      report_results:
+        description: Report declined findings back to the CVE Fix UI.
+        required: false
+        type: string
+        default: "true"
+
+jobs:
+  vuln-autofix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    steps:
+      # The action operates on an already-checked-out tree. fetch-depth: 0 so
+      # the PR action can see history for its branch bookkeeping.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_branch }}
+          fetch-depth: 0
+
+      - name: Run vuln-autofix
+        uses: Infoblox-CTO/vuln-autofix@v1
+        with:
+          service_name: ${{ inputs.service_name }}
+          target_branch: ${{ inputs.target_branch }}
+          working_directory: ${{ inputs.working_directory }}
+          artifact_retention_days: ${{ inputs.artifact_retention_days }}
+          pr_branch: ${{ inputs.pr_branch }}
+          pr_commit_message: ${{ inputs.pr_commit_message }}
+          pr_title: ${{ inputs.pr_title }}
+          config_api_url: ${{ inputs.config_api_url }}
+          report_results: ${{ inputs.report_results }}
+          # Secrets forwarded as inputs — see the header note.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          gitpat: ${{ secrets.GITPAT }}
+          config_api_token: ${{ secrets.VULN_AUTOFIX_API_TOKEN }}
+          wiz_client_id: ${{ secrets.WIZ_CLIENT_ID }}
+          wiz_client_secret: ${{ secrets.WIZ_CLIENT_SECRET }}
+          harbor_username: ${{ secrets.HARBOR_SERVICES_PROD_USERNAME }}
+          harbor_password: ${{ secrets.HARBOR_SERVICES_PROD_PASSWORD }}

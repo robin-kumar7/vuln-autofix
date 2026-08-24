@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Infoblox-CTO/vuln-autofix/config/schema.json",
+  "title": "vuln-autofix services config",
+  "description": "Schema for services-config.yaml and for the per-service fragment analytics-api serves. The predecessor had no schema at all, so a typo'd key (dockerfile_path -> dockerfilepath) failed mid-run, after the Docker build had already been paid for. Two fields that 9 and 3 services actually rely on (vendor_for_docker, docker_build_context) were undocumented.",
+  "type": "object",
+  "required": ["services"],
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "wiz_cli_version": {
+          "type": "string",
+          "default": "latest",
+          "description": "Wiz CLI version to download."
+        },
+        "harbor_registry": {
+          "type": "string",
+          "default": "harbor.services.sdp.infoblox.com",
+          "description": "Registry logged into before the image build."
+        },
+        "artifact_retention_days": {
+          "type": ["integer", "string"],
+          "default": 7,
+          "description": "Retention for scan artifacts."
+        }
+      }
+    },
+    "services": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Keyed by service name, which is what the workflow passes as service_name.",
+      "additionalProperties": { "$ref": "#/$defs/service" }
+    }
+  },
+  "$defs": {
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["image_name", "dockerfile_path", "server_build_path", "base_image"],
+      "properties": {
+        "team": {
+          "type": "string",
+          "description": "Owning team. Becomes the PR label team:<value> so PRs land in the right queue. Not read by any script."
+        },
+        "image_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Local tag for the scanned image (built as <image_name>:scan)."
+        },
+        "dockerfile_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Dockerfile, relative to working_directory. Existence is checked before the build."
+        },
+        "server_build_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^\\.(/.*)?$",
+          "description": "Single main package to build, e.g. ./cmd/cloud, or \".\" / \"./\" when main is at the module root (4 of the 105 registered services do this). Must resolve to ONE main package — ./... will not work."
+        },
+        "base_image": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Passed as --build-arg BASE_IMAGE. Validated against Harbor by the registration wizard."
+        },
+        "build_tags": {
+          "type": "string",
+          "default": "",
+          "description": "go build -tags value."
+        },
+        "build_ldflags": {
+          "type": "string",
+          "default": "-s -w",
+          "description": "go build -ldflags value."
+        },
+        "docker_build_extra_args": {
+          "type": "string",
+          "default": "",
+          "description": "Interpolated unquoted into docker build. Keep it to --build-arg pairs."
+        },
+        "go_private": {
+          "type": "string",
+          "default": "",
+          "description": "GOPRIVATE/GONOSUMDB globs, e.g. github.com/Infoblox-CTO/*. Without this, private imports resolve through the public proxy and 404."
+        },
+        "vendor_for_docker": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run go mod vendor on the host before docker build. Needed when the Dockerfile compiles in-container and so cannot reach private modules itself."
+        },
+        "docker_build_context": {
+          "type": "string",
+          "default": ".",
+          "description": "docker build context. Set to .. for a monorepo module whose Dockerfile COPYs from the repo root."
+        },
+        "working_directory": {
+          "type": "string",
+          "default": ".",
+          "description": "Module subdirectory for multi-module repos. Also passed to the workflow."
+        },
+        "policy": { "$ref": "#/$defs/policy" },
+
+        "mode": {
+          "deprecated": true,
+          "type": "string",
+          "description": "DEPRECATED, ignored. Only ever accepted the value 'heuristic'."
+        },
+        "risk_threshold_auto": { "deprecated": true, "type": ["number", "string"], "description": "DEPRECATED, ignored. See policy." },
+        "risk_threshold_review": { "deprecated": true, "type": ["number", "string"], "description": "DEPRECATED, ignored. See policy." },
+        "min_confidence": { "deprecated": true, "type": ["number", "string"], "description": "DEPRECATED, ignored. Could never bind: confidence was a constant above it." },
+        "confidence": { "deprecated": true, "type": ["number", "string"], "description": "DEPRECATED, ignored. Was a config constant, never computed." },
+        "exploit_weight": { "deprecated": true, "type": ["number", "string"], "description": "DEPRECATED, ignored. See policy." },
+        "version_weight": { "deprecated": true, "type": ["number", "string"], "description": "DEPRECATED, ignored. See policy." },
+        "cycle_weight": { "deprecated": true, "type": ["number", "string"], "description": "DEPRECATED, ignored. See policy." }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What may be applied without a human. Replaces the weighted risk score, which could not discriminate: at the shipped weights every finding scored auto_apply.",
+      "properties": {
+        "auto_apply": {
+          "type": "array",
+          "uniqueItems": true,
+          "default": ["patch", "minor"],
+          "items": { "enum": ["patch", "minor"] },
+          "description": "Bump types eligible for automatic application. major is deliberately not an option."
+        },
+        "max_minor_jump": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 20,
+          "description": "Largest minor-version delta still applied automatically. Beyond this it goes to review."
+        },
+        "never": {
+          "type": "array",
+          "uniqueItems": true,
+          "default": ["major", "stdlib"],
+          "items": { "enum": ["major", "stdlib"] },
+          "description": "Never automatic. stdlib findings need a Go toolchain bump, not a module edit."
+        },
+        "require_build_pass": {
+          "type": "boolean",
+          "default": true,
+          "description": "Roll back and fail rather than open a PR that does not compile."
+        }
+      }
+    }
+  }
+}
