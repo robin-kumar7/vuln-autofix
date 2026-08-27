@@ -45,3 +45,29 @@ services:
     exploit_weight: 0.40
     version_weight: 0.35
     cycle_weight: 0.25
+
+  cdc-grpc-in:
+    team: "cdc-team"
+    image_name: "cdc-grpc-in"
+    dockerfile_path: "docker/Dockerfile.cloud"
+    server_build_path: "./cmd/cloud"
+    base_image: "harbor.services.sdp.infoblox.com/infobloxcto/static-debian12:v2025.6.27-nonroot-627d6c"
+    build_tags: ""
+    build_ldflags: "-s -w"
+    docker_build_extra_args: ""
+    go_private: ""
+    docker_build_context: "."
+    working_directory: "."
+    mode: "heuristic"
+    risk_threshold_auto: 0.85
+    risk_threshold_review: 0.90
+    min_confidence: 0.70
+    confidence: 0.75
+    exploit_weight: 0.40
+    version_weight: 0.35
+    cycle_weight: 0.25
+    policy:
+      auto_apply: [patch, minor]
+      max_minor_jump: 20
+      never: [major, stdlib]
+      require_build_pass: true
