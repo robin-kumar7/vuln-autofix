@@ -73,7 +73,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run vuln-autofix
-        uses: Infoblox-CTO/vuln-autofix@v1
+        uses: robin-kumar7/vuln-autofix@v1
         with:
           service_name: ${{ inputs.service_name }}
           target_branch: ${{ inputs.target_branch }}
